@@ -1,0 +1,2 @@
+../Core/Src/midi.c:14:6:NoteON	1
+../Core/Src/midi.c:29:6:NoteOFF	1
