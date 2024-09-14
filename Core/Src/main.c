@@ -37,7 +37,7 @@ uint32_t ADCRawBuff[NO_OF_ADCBUFFERS][NO_OF_ADCCHANNELS];
 uint8_t PAD_Active[NO_OF_ADCCHANNELS];
 uint8_t PAD_FadeOutValue[NO_OF_ADCCHANNELS] = {1500,1500,1500,1500,1500,1500,1500,1500};
 uint32_t PAD_Debounce[NO_OF_ADCCHANNELS] = {1000,1000,1000,1000,1000,1000,1000,1000};
-uint32_t PAD_ScanWindow[NO_OF_ADCCHANNELS] = {10,10,10,10,10,10,10,10};
+uint32_t PAD_ScanWindow[NO_OF_ADCCHANNELS] = {100,100,100,100,100,100,100,100};
 uint32_t PAD_TickCouner[NO_OF_ADCCHANNELS];
 
 uint32_t PAD_Threshold[NO_OF_ADCCHANNELS] = {200,200,200,200,200,200,400,400};
@@ -78,7 +78,7 @@ uint32_t adcRaw[NO_OF_ADCCHANNELS];
 float 	ADCval[NO_OF_ADCCHANNELS];
 
 
-#define MAX_ADC_CLIP_VOLTAGE    2700
+#define MAX_ADC_CLIP_VOLTAGE    4095
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -151,16 +151,17 @@ int main(void)
 	  memcpy(adcRaw,ADCRawBuff[currentBuffCount],sizeof(adcRaw));
 	  for(int i=0;i<NO_OF_ADCCHANNELS;i++){
 
-		  if((adcRaw[i]>PAD_Threshold[i]) && (PAD_Active[i]==0) ){
+		  if((adcRaw[i]>PAD_Threshold[i]) && (PAD_Active[i]==0) ){  /*<Check if adc is greater than threshop;d>*/
 
 			  PAD_Active[i] =1;
 			  EnableScan[i]=1;
 			  PAD_TickCouner[i]=0;
+			  currmax[i]=0;
 
 
 		  }else{
 
-		  if((PAD_Active[i]==1) && (EnableScan[i]==1))
+		  if((PAD_Active[i]==1) && (EnableScan[i]==1))  /*Scan for Peak till scan time*/
 		  {
 			  if(currmax[i]<adcRaw[i]){
 				  currmax[i] = adcRaw[i];
@@ -173,8 +174,8 @@ int main(void)
 		  if((PAD_TickCouner[i]>PAD_ScanWindow[i]) &&(EnableScan[i]==1) && (PAD_Active[i]==1) ){
 
 			  EnableScan[i]=0;
-			  midivelocity = (127*currmax[i])/MAX_ADC_CLIP_VOLTAGE;
-			  currmax[i]=0;
+			  midivelocity = (127*currmax[i])/MAX_ADC_CLIP_VOLTAGE;       /*Once scan phase is compelted, send data to midi*/
+
   			  NoteON(drums[i], 0, midivelocity);
 			  PAD_FadeOutValue[i] = (255*currmax[i])/MAX_ADC_CLIP_VOLTAGE;
 			  EnableFade[i]=1;
@@ -188,7 +189,7 @@ int main(void)
 
 		  }
 
-		  if(PAD_TickCouner[i]>PAD_Debounce[i]){
+		  if(PAD_TickCouner[i]>PAD_Debounce[i]){  /*Exect new response after debounce*/
 
 			  PAD_Active[i]=0;
 
