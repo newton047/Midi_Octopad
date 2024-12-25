@@ -9,9 +9,9 @@
 #define TRANSMIT_ABS_H_
 
 #include <stdint.h>
+#include "module_options.h"
 
-#define MIDI_OVER_UART  0
-#define MIDI_OVER_USB   1
+
 
 void SendMessage(uint8_t* msg, uint32_t len);
 #endif /* TRANSMIT_ABS_H_ */

@@ -27,6 +27,7 @@
 #include "midi.h"
 #include "songs.h"
 #include "usbd_hid.h"
+#include "module_options.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,13 +100,14 @@ int main(void)
 	 ADC_ChannelConfTypeDef sConfig = {0};
 	 uint8_t currentBuffCount=0,nextBufferCounter=0;;
 	 uint32_t curTick,NextTick,TimeElapsed;
+	  uint8_t midivelocity=0;
 
 	 uint32_t MessageSent=0;
 	 //for max peak detection
 
-	 uint32_t currmax[NO_OF_ADCCHANNELS];
-	 uint8_t EnableScan[NO_OF_ADCCHANNELS];
-	 uint8_t EnableFade[NO_OF_ADCCHANNELS];
+	 uint32_t currmax[NO_OF_ADCCHANNELS];   /*Holds maximum value it detected over the window*/
+	 uint8_t EnableScan[NO_OF_ADCCHANNELS]; /*ENable the Scan mode*/
+	 uint8_t EnableFade[NO_OF_ADCCHANNELS]; /*Enable or disable the Fade Mode*/
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -135,60 +137,62 @@ int main(void)
 
   memset(PAD_Active,0,sizeof(PAD_Active));
   memset(currmax,0,sizeof(currmax));
-  //memset(PAD_FadeOutValue,0,sizeof(PAD_FadeOutValue));
+
   ADC_Update(&ADCRawBuff[currentBuffCount]);
   nextBufferCounter++;
-  uint8_t midivelocity=0;
+
   while(getConvStatus()==0);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	/*  while(1){
+#if ENABLE_TEST_MODE
+	 while(1){
 		  for(int i=0;i<sizeof(drums);i++){
-			  NoteON(drums[i], 0, 100);
-			  HAL_Delay(500);
-			  NoteOFF(drums[i], 0, 100);
-			  HAL_Delay(500);
+			  NoteON(drums[i], 0, 100); /*Turn on the note*/
+			  HAL_Delay(500);          /*Delay of 500ms*/
+			  NoteOFF(drums[i], 0, 100); /*Turn OFF the node*/
+			  HAL_Delay(500);			 /*Delay of 500ms*/
 		  }
 
-	  }*/
+	  }
 
-	  //HAL_Delay(1);
+#endif
 
-	  ADC_Update((uint32_t*)&ADCRawBuff[nextBufferCounter]);
 
-	  memcpy(adcRaw,ADCRawBuff[currentBuffCount],sizeof(adcRaw));
-	  for(int i=0;i<NO_OF_ADCCHANNELS;i++){
+	  ADC_Update((uint32_t*)&ADCRawBuff[nextBufferCounter]); /*Start DMA conversion for BUffer2*/
 
-		  if((adcRaw[i]>PAD_Threshold[i]) && (PAD_Active[i]==0) ){  /*<Check if adc is greater than threshop;d>*/
+	  memcpy(adcRaw,ADCRawBuff[currentBuffCount],sizeof(adcRaw)); /*Copy results from DMA buffer1*/
+	  for(int i=0;i<NO_OF_ADCCHANNELS;i++){ /*Iterating over all Pads*/
 
-			  PAD_Active[i] =1;
-			  EnableScan[i]=1;
-			  PAD_TickCouner[i]=0;
-			  currmax[i]=0;
+		 if((adcRaw[i]>PAD_Threshold[i]) && (PAD_Active[i]==0) ){  /*<Check if adc is greater than threshold>*/
+
+			  PAD_Active[i]     = 1;/*Set the PAD as active*/
+			  EnableScan[i]     = 1;/*Enter Scan Mode*/
+			  PAD_TickCouner[i] = 0; /*Initialize delay counter*/
+			  currmax[i]=0;          /*Intialize max for peak detection*/
 
 
 		  }else{
-
-		  if((PAD_Active[i]==1) && (EnableScan[i]==1))  /*Scan for Peak till scan time*/
-		  {
-			  if(currmax[i]<adcRaw[i]){
-				  currmax[i] = adcRaw[i];
-			  }
-
+//SCAN MODE
+			  if((PAD_Active[i]==1) && (EnableScan[i]==1))  /*Scan for Peak till scan time*/
+			  {
+				  if(currmax[i]<adcRaw[i]){
+					  currmax[i] = adcRaw[i]; /*Update MAX value*/
+				  }
 
 		  }
 
 
 		  if((PAD_TickCouner[i]>PAD_ScanWindow[i]) &&(EnableScan[i]==1) && (PAD_Active[i]==1) ){
-
+			 /*Calculating velocity data after SCAN mode*/
 			  EnableScan[i]=0;
 			  midivelocity = (127*currmax[i])/MAX_ADC_CLIP_VOLTAGE;       /*Once scan phase is compelted, send data to midi*/
 
-  			  NoteON(drums[i], 0, midivelocity);
+  			  NoteON(drums[i], 0, midivelocity); /*Turn on the PAD*/
 			  PAD_FadeOutValue[i] = (255*currmax[i])/MAX_ADC_CLIP_VOLTAGE;
 			  EnableFade[i]=1;
 			  MessageSent++;
@@ -234,7 +238,7 @@ int main(void)
 
 	  while(getConvStatus()==0); /*Wait for conversion to be completed*/
 
-	  currentBuffCount = nextBufferCounter;
+	  currentBuffCount = nextBufferCounter; /*Update Buffer Pointer*/
 	  nextBufferCounter++;
 	  if(nextBufferCounter>=NO_OF_ADCBUFFERS){nextBufferCounter=0;}
 
