@@ -25,4 +25,9 @@ SUBDIRS := \
 Core/Src \
 Core/Startup \
 Drivers/STM32F4xx_HAL_Driver/Src \
+Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src \
+Middlewares/ST/STM32_USB_Device_Library/Core/Src \
+Transmit_ABS \
+USB_DEVICE/App \
+USB_DEVICE/Target \
 

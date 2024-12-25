@@ -9,6 +9,11 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include USB_DEVICE/Target/subdir.mk
+-include USB_DEVICE/App/subdir.mk
+-include Transmit_ABS/subdir.mk
+-include Middlewares/ST/STM32_USB_Device_Library/Core/Src/subdir.mk
+-include Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
@@ -60,8 +65,8 @@ all: main-build
 main-build: MIDI_OCTOPAD.elf secondary-outputs
 
 # Tool invocations
-MIDI_OCTOPAD.elf MIDI_OCTOPAD.map: $(OBJS) $(USER_OBJS) D:\Newton\Courses\Mastering\ STM32\Project1\MIDI_OCTOPAD\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "MIDI_OCTOPAD.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Newton\Courses\Mastering STM32\Project1\MIDI_OCTOPAD\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="MIDI_OCTOPAD.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+MIDI_OCTOPAD.elf MIDI_OCTOPAD.map: $(OBJS) $(USER_OBJS) D:\Newton\Courses\Mastering\ STM32\MainProject\MIDI_Upgrage\MIDI_OCTOPAD\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "MIDI_OCTOPAD.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Newton\Courses\Mastering STM32\MainProject\MIDI_Upgrage\MIDI_OCTOPAD\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="MIDI_OCTOPAD.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
